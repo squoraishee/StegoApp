@@ -3,6 +3,7 @@ package mobilonix.stego.algo;
 import java.io.ByteArrayOutputStream;
 import java.util.BitSet;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -58,23 +59,55 @@ public class StegoEncodeActivity extends Activity {
 	    }
 	//now have to tak the bits ans add it to each msb
 	   String convertTextToBits(String s) {
-		    
 		   char[] cArray=s.toCharArray(); //c to char array  so yiou concert thre string to char arat and then for eahc char in the char aeeay  you keep appending to the stirng
-
 		    StringBuilder sb=new StringBuilder();
-
 		    for(char c:cArray)
 		    {
-		    	if (c == '.' || c == '!' || c == '+' || c == '!' || c == '?' || c == ',')
+		    	if (c == '.' || c == '!' || c == '+' || c == '!' || c == '?' || c == ',' || c == ' ')
 		    		c = '_';
 		        String cBinaryString=Integer.toBinaryString((int)c);//then usign th einteger wrapper you can you can use the toBinaryString method to conver a char to a binary string string
 		        sb.append(cBinaryString);
 		    }
-		    	
 		    return sb.toString();
+	   }
+	   //this function uses a reule for embdeding text into the image
+	   String decodeImage(Bitmap bitmap) {
+		   String temp = "";
+		   String value = "";
+		   boolean foundEnd = false;
+		   for (int i = 0; ((i < bitmap.getWidth()) && !foundEnd); i++) {
+			   for (int j = 0; ((j < bitmap.getHeight()) && !foundEnd); j ++) {
+				   
+					int rgb = bitmap.getPixel(i, j);
+	        		int r = Color.red(rgb) ;
+	        		int g = Color.green(rgb) ;
+	        		int b = Color.blue(rgb) ;
+	        		if (r == 100) {
+	        			temp += "1";
+	        		} else if (r == 255) {
+	        			temp += "0";
+	        		} else {
+	        			temp += "0";
+	        		}
+				   
+	        		Log.v("R value: ","R: " + r);
+	        		if (temp.length() == 7) {
+	        			value += (char)Integer.parseInt(temp,2);
+	        			Log.v("Word"," " + (char)Integer.parseInt(temp,2));
+	        			temp = "";
+	        		}
+	        		
+	        		if (r == 0 && b == 0 && g == 0) {
+	        			foundEnd = true;
+	        		}
+	        		
+			   }
+		   }
+		   Log.v("SENTANCE",value);
+		   return value;
 		   
 	   }
-	 
+	   
 	   int encodingIndex = 0;
 	   String encodingString = "";
 	   Handler handler = new Handler();
@@ -89,6 +122,7 @@ public class StegoEncodeActivity extends Activity {
 	 		
 	        new Thread(new Runnable() {
 
+				@SuppressLint("NewApi")
 				public void run() {
 					
 					handler.post(new Runnable() {
@@ -103,24 +137,41 @@ public class StegoEncodeActivity extends Activity {
 					
 					bos = new ByteArrayOutputStream(); //we use a byte arrayoutput stream to get th ebitmap data
 			        bitmap = ((BitmapDrawable)encodingImage.getDrawable()).getBitmap();
-			        bitmap.compress(CompressFormat.PNG, 0, bos); //so why do dyou want ot have to use compress for sure, you are writign a compressed verison fo the data can you jsut write to an oautptu stream withotut hte compress fucntion
-			        bitmapdata = bos.toByteArray();//bitmap data must finsih
-			 	 	
+			        bitmap.compress(CompressFormat.PNG, 0, new ByteArrayOutputStream());
+			        bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true); //make  amutable copy of th ebitmap why isn't it mutable by default
+			        
+			        bitmap.setHasAlpha(true);
 			        for (int i = 0; ( (i < bitmap.getWidth()) && (encodingIndex < encodingString.length())) ; i++) {
 			        	for (int j = 0; ( (j < bitmap.getHeight()) && (encodingIndex < encodingString.length())); j++) {
 			        		
 			        		int rgb = bitmap.getPixel(i, j);
-			        		int r = (rgb >> 16) & 0x0FF ;
-			        		int g = (rgb >> 8) & 0x0FF:
-			        		int b = rgb;
+			        		int r = Color.red(rgb);
+			        		int g = Color.green(rgb);
+			        		int b = Color.blue(rgb);
+			        		Log.v("Premodified Bitmap Color ","R "  + r + " B " + b + " G " + g);
 			        		
-			        		if (encodingIndex == encodingString.length()) {
-			        			r = 0;
-			        			g = 0;
-			        			b = 0;
+			        		
+			        		if (encodingString.charAt(encodingIndex) == '1') {
+			        			r = 100;
+			        		} else 
+			        		{
+			        			r = 255;
 			        		}
-			        		bitmap.setPixel(i, j, Color.rgb(r, g, b));
+			        		Log.v("R", "R: " + r);
+			        		Log.v("ENCODING INDEX: ", "INDEX: " + encodingIndex + " LENGTH: " + encodingString.length());
 			        		encodingIndex++;
+			        		bitmap.setPixel(i, j, Color.rgb(r, g, b));
+			        		Log.v("POSTmodified Bitmap Color ","R "  + Color.red(bitmap.getPixel(i, j)) + " B " + Color.blue(bitmap.getPixel(i, j)) + " G " + Color.green(bitmap.getPixel(i, j)));
+				        	
+			        		if (encodingIndex == encodingString.length()) {
+			        			
+			        			Log.v("SYSTEM: ", "SETTING A ZERO VALUE PIXEL");
+			        			bitmap.setPixel(i, j, Color.BLACK);
+			        			Log.v("GETTING END COLOR ","R "  + Color.red(bitmap.getPixel(i, j)) + " B " + Color.blue(bitmap.getPixel(i, j)) + " G " + Color.green(bitmap.getPixel(i, j)));
+					        	
+			        		}
+			        		
+			        		
 			        	}	
 			        }
 			        
@@ -128,7 +179,10 @@ public class StegoEncodeActivity extends Activity {
 
 						public void run() {
 							// TODO Auto-generated method stub
-							Toast.makeText(StegoEncodeActivity.this, binaryEncodedString, Toast.LENGTH_LONG).show();//this text
+							encodingImage.setImageBitmap(bitmap);
+							Toast.makeText(StegoEncodeActivity.this, "Original String: " + encodingString, Toast.LENGTH_LONG).show();//this text
+							Bitmap toSet = ((BitmapDrawable)encodingImage.getDrawable()).getBitmap();
+							Toast.makeText(StegoEncodeActivity.this, "Decoded String: " + decodeImage(toSet), Toast.LENGTH_LONG).show();//this text
 							encodeImageButton.setText("Encode Image");
 						}
 						
@@ -136,15 +190,7 @@ public class StegoEncodeActivity extends Activity {
 					
 				}
 	        }).start();
-	        
 	       
-	      //  Toast.makeText(this, bitmapdata., Toast.LENGTH_LONG).show();
-	       //this has to be achar seqeunce what do I do with this char seqeunce
-	        
-	        
-	        //for each of the bits ibt the byte array array add the  hte each bit to the lsb in timage data or conver the lsb into image data, but how can I teell if somethign is encoded
-	      //
-	        ///so here we encode text in most significant bytes
 	 	}
 	 	
 	 

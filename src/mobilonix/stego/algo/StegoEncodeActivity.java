@@ -5,6 +5,7 @@ import java.util.BitSet;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -64,6 +65,8 @@ public class StegoEncodeActivity extends Activity {
 
 		    for(char c:cArray)
 		    {
+		    	if (c == '.' || c == '!' || c == '+' || c == '!' || c == '?' || c == ',')
+		    		c = '_';
 		        String cBinaryString=Integer.toBinaryString((int)c);//then usign th einteger wrapper you can you can use the toBinaryString method to conver a char to a binary string string
 		        sb.append(cBinaryString);
 		    }
@@ -72,6 +75,8 @@ public class StegoEncodeActivity extends Activity {
 		   
 	   }
 	 
+	   int encodingIndex = 0;
+	   String encodingString = "";
 	   Handler handler = new Handler();
 	   ByteArrayOutputStream bos = new ByteArrayOutputStream();
 	   Bitmap bitmap;
@@ -79,7 +84,8 @@ public class StegoEncodeActivity extends Activity {
 	   String binaryEncodedString = "";
 	 	public void encodeImage() {
 	 		//what do you do with encoding image
-	 		Toast.makeText(this, convertTextToBits(encodingText.getText().toString()), Toast.LENGTH_LONG).show();
+	 		encodingString = convertTextToBits(encodingText.getText().toString());
+	 		Toast.makeText(this, encodingString, Toast.LENGTH_LONG).show();
 	 		
 	        new Thread(new Runnable() {
 
@@ -99,21 +105,25 @@ public class StegoEncodeActivity extends Activity {
 			        bitmap = ((BitmapDrawable)encodingImage.getDrawable()).getBitmap();
 			        bitmap.compress(CompressFormat.PNG, 0, bos); //so why do dyou want ot have to use compress for sure, you are writign a compressed verison fo the data can you jsut write to an oautptu stream withotut hte compress fucntion
 			        bitmapdata = bos.toByteArray();//bitmap data must finsih
-			 	 	int charBitIndex = 0;
-			 	 	int charIndex = 0;
 			 	 	
-					for (int i = 0; i < bitmapdata.length; i++) {
-				 	    	String binString = Integer.toBinaryString(Integer.valueOf(Byte.toString(bitmapdata[i])));
-						   
-				 	    	Log.v("Image Data Byte " + i,binString);
-				 	    	if (charBitIndex < 8) {
-				 	    		binaryEncodedString += binString.charAt((int)(binString.length() - 1));
-				 	    	} else {
-				 	    		charBitIndex = 0;
-				 	    		binaryEncodedString += " ";
-				 	    	}
-				 	    	charBitIndex++;
-					}
+			        for (int i = 0; ( (i < bitmap.getWidth()) && (encodingIndex < encodingString.length())) ; i++) {
+			        	for (int j = 0; ( (j < bitmap.getHeight()) && (encodingIndex < encodingString.length())); j++) {
+			        		
+			        		int rgb = bitmap.getPixel(i, j);
+			        		int r = (rgb >> 16) & 0x0FF ;
+			        		int g = (rgb >> 8) & 0x0FF:
+			        		int b = rgb;
+			        		
+			        		if (encodingIndex == encodingString.length()) {
+			        			r = 0;
+			        			g = 0;
+			        			b = 0;
+			        		}
+			        		bitmap.setPixel(i, j, Color.rgb(r, g, b));
+			        		encodingIndex++;
+			        	}	
+			        }
+			        
 					handler.post(new Runnable() {
 
 						public void run() {

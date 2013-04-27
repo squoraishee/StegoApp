@@ -16,22 +16,18 @@ public final class R {
         public static final int koala=0x7f020002;
     }
     public static final class id {
-        public static final int choose_image_button=0x7f070002;
-        public static final int encode_text_button=0x7f070003;
-        public static final int encode_text_field=0x7f070001;
-        public static final int encoding_image=0x7f070000;
-        public static final int menu_settings=0x7f070004;
+        public static final int choose_image_button=0x7f060002;
+        public static final int encode_text_button=0x7f060003;
+        public static final int encode_text_field=0x7f060001;
+        public static final int encoding_image=0x7f060000;
     }
     public static final class layout {
-        public static final int activity_stego_about=0x7f030000;
-        public static final int activity_stego_decoder=0x7f030001;
-        public static final int activity_stego_encoder=0x7f030002;
-        public static final int activity_stego_nav=0x7f030003;
-        public static final int choose_file_dialog=0x7f030004;
-        public static final int layout_fragment=0x7f030005;
-    }
-    public static final class menu {
-        public static final int activity_stegano_graph=0x7f060000;
+        public static final int activity_stego_encoder=0x7f030000;
+        public static final int choose_file_dialog=0x7f030001;
+        public static final int layout_fragment=0x7f030002;
+        public static final int stego_tool_about_activity=0x7f030003;
+        public static final int stego_tool_encode_activity=0x7f030004;
+        public static final int stego_tool_nav_activity=0x7f030005;
     }
     public static final class string {
         public static final int app_name=0x7f040000;
